@@ -1,36 +1,19 @@
 package main;
 
-import java.util.Arrays;
+import game.Game;
+import game.Human;
+import game.Player;
+import game.Window;
 
 public class Main {
 
 	public static void main(String[] args) {
-		int[] arr = new int[100];
-		arr[0]++;
+		Player p1 = new Human(true);
+		Player p2 = new Human(false);
+//		Player p2 = new Ki(false);
+		Game game = new Game(p1, p2);
 		
-		System.out.println(Arrays.toString(arr));
+		Window w = new Window(400,420);
+		w.displayGame(game);
 	}
-	
-	
-	
-	
-//	int[] a = new int[10];
-//	for (int i = 0; i < a.length; i++) {
-//		a[i] = i;
-//	}
-//	System.out.println(new ArrayList<Integer>(Arrays.asList(a)));
-//	int a = 0;
-//	int b = 0;
-//	int c = 0;
-//	
-//	a += c + -b++ / -a++;
-//	
-//	System.out.println(a);
-//	Player p1 = new Human(true);
-//	Player p2 = new Human(false);
-////	Player p2 = new Ki(false);
-//	Game game = new Game(p1, p2);
-//	
-//	Window w = new Window(800,820);
-//	w.displayGame(game);
 }

@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -25,6 +26,13 @@ public abstract class Figure {
 	protected static final Point RIGHT = new Point(1, 0);
 	protected static final Point DOWN = new Point(0, -1);
 	
+	public static final int TYPE_PAWN = 0;
+	public static final int TYPE_ROOK = 1;
+	public static final int TYPE_QUEEN = 2;
+	public static final int TYPE_KING = 3;
+	public static final int TYPE_BISHOP = 4;
+	public static final int TYPE_KNIGHT = 5;
+	
 	public static final BufferedImage[] IMG_PWAN = {loadImage("/pawn_w.png"),loadImage("/pawn_b.png")};
 	public static final BufferedImage[] IMG_BISHOP = {loadImage("/bishop_w.png"),loadImage("/bishop_b.png")};
 	public static final BufferedImage[] IMG_QUEEN = {loadImage("/queen_w.png"),loadImage("/queen_b.png")};
@@ -33,22 +41,24 @@ public abstract class Figure {
 	public static final BufferedImage[] IMG_KNIGHT = {loadImage("/knight_w.png"),loadImage("/knight_b.png")};
 	
 	private Point pos;
-	private String name;
+	/**
+	 * Last Position or null if not moved yet
+	 */
+	private Point lastPos;
+	private int type;
 	private boolean isAlive = true;
 	private boolean white;
-	private boolean hasMoved = false;
-	private boolean isKing = false;
 	
-	protected Figure(int x, int y, String name, boolean white, boolean isKing) {
-		this(x, y, name, white);
-		this.isKing = isKing;
-	}
+	private int index;
 	
-	protected Figure(int x, int y, String name, boolean white) {
+	private static final Figure[][] defaultFigures = {getDistinctDefaultFigures(true), getDistinctDefaultFigures(false)};
+	
+	protected Figure(int x, int y, int type, boolean white, int index) {
 		super();
 		this.pos = new Point(x, y);
-		this.name = name;
+		this.type = type;
 		this.white = white;
+		this.index = index;
 	}
 	
 	 static BufferedImage loadImage(String path) {
@@ -62,13 +72,13 @@ public abstract class Figure {
 	 
 	private BufferedImage getImage() {
 		int i = isWhite() ? 0 : 1;
-		switch (getName()) {
-		case "King": return IMG_KING[i];
-		case "Pawn": return IMG_PWAN[i];
-		case "Bishop": return IMG_BISHOP[i];
-		case "Knight": return IMG_KNIGHT[i];
-		case "Rook": return IMG_ROOK[i];
-		case "Queen": return IMG_QUEEN[i];
+		switch (getType()) {
+		case TYPE_KING: return IMG_KING[i];
+		case TYPE_PAWN: return IMG_PWAN[i];
+		case TYPE_BISHOP: return IMG_BISHOP[i];
+		case TYPE_KNIGHT: return IMG_KNIGHT[i];
+		case TYPE_ROOK: return IMG_ROOK[i];
+		case TYPE_QUEEN: return IMG_QUEEN[i];
 		default: return null;
 		}
 	}
@@ -99,18 +109,32 @@ public abstract class Figure {
 		return out;
 	}
 	
-	public abstract List<Point> getPossibleMoves(List<Figure> field);
+	public static Figure[] getDistinctDefaultFigures(boolean color) {
+		Figure[] out = new Figure[6];
+		List<Integer> used = new ArrayList<>();
+		int counter = 0;
+		for (Figure figure : getAllDefault(color)) {
+			if(!used.contains(figure.getType())) {
+				out[counter] = figure.clone();
+				used.add(figure.getType());
+				counter++;
+			}
+		}
+		return out;
+	}
+	
+	public abstract List<Move> getPossibleMoves(List<Figure> field);
 	
 	
-	public List<Point> getPossibleMovesChecked(List<Figure> field){
-		List<Point> tests = getPossibleMoves(field);
+	public List<Move> getPossibleMovesChecked(List<Figure> field){
+		List<Move> tests = getPossibleMoves(field);
+		System.out.println("unchecked: " + tests);
 		deleteInvalidMoves(field, tests);
 		return tests;
 	}
 	
 	public List<Point> getAvailabeMoves(){
 		List<Point> out = new ArrayList<>();
-		
 		return out;
 	}
 	
@@ -122,14 +146,14 @@ public abstract class Figure {
 		return new Point(a.x + b.x, a.y + b.y);
 	}
 	
-	protected int freeInDirection(List<Figure> field, Point direction) {
+	protected int freeInDirection(List<Figure> field, Point localDirection, boolean canHit) {
 		for (int i = 1; i < 8; i++) {
-			Point test = add(getLocalPos(), multiply(direction, i));
+			Point test = add(getLocalPos(), multiply(localDirection, i));
 			if(!pointInField(test)) {
 				return i - 1;
 			}
 			if(enemyOnPos(field, test)) {
-				return i;
+				return i - (canHit ? 0 : 1);
 			} else if(mateOnPos(field, test)) {
 				return i - 1;
 			}
@@ -137,15 +161,19 @@ public abstract class Figure {
 		return 0;
 	}
 	
-	protected List<Point> getFreePointsInDirection(List<Figure> field, Point direction){
-		return getFreePointsInDirection(field, direction, 8);
+	protected List<Move> getFreeMovesInDirection(List<Figure> field, Point direction){
+		return getFreeMovesInDirection(field, direction, 8, true);
 	}
 	
-	protected List<Point> getFreePointsInDirection(List<Figure> field, Point direction, int max){
-		List<Point> out = new ArrayList<>();
+	protected List<Move> getFreeMovesInDirection(List<Figure> field, Point localDirection, int max, boolean canHit){
+		List<Move> out = new ArrayList<>();
 		Point local = getLocalPos();
-		for (int i = 1; i <= Math.min(max, freeInDirection(field, direction)); i++) {
-			out.add(add(local, multiply(direction, i)));
+		Point global = getGlobalPos();
+		for (int i = 1; i <= Math.min(max, freeInDirection(field, localDirection, canHit)); i++) {
+			Point globalTo = convert(add(local, multiply(localDirection, i)));
+			Figure kill = getFigureAtPos(field, globalTo, !isWhite());
+			Move move = new Move(this, global, globalTo, kill);
+			out.add(move);
 		}
 		return out;
 	}
@@ -156,7 +184,7 @@ public abstract class Figure {
 			if(figure == this || figure.isWhite() == isWhite() || !figure.isAlive) {
 				continue;
 			}
-			if(figure.getGlobalPos().x == global.x && figure.getGlobalPos().y == global.y) {
+			if(figure.isAtGlobalPoint(global)) {
 				return true;
 			}
 		}
@@ -176,29 +204,55 @@ public abstract class Figure {
 		return false;
 	}
 	
-	@Override
-	protected abstract Figure clone();
-	
-	protected void deleteInvalidMoves(List<Figure> field, List<Point> tests) {
-		List<Point> removals = new ArrayList<>();
-		for (Point test : tests) {
+	/**
+	 * deletes moves wich:
+	 * 		would lead to checkmate
+	 * 
+	 * @param field
+	 * @param tests
+	 */
+	protected void deleteInvalidMoves(List<Figure> field, List<Move> tests) {
+		List<Move> removals = new ArrayList<>();
+		for (Move test : tests) {
+			/**
+			 * Cloning field
+			 */
 			List<Figure> testField = new ArrayList<>();
 			for (Figure figure : field) {
 				testField.add(figure.clone());
 			}
-			testField.get(field.indexOf(this)).setLocalPos(test);
+			/**
+			 * reconfiguring move to point to cloned field
+			 */
+			Figure newKill = null;
+			if(field.indexOf(test.getKill()) != -1) {
+				newKill = testField.get(field.indexOf(test.getKill()));
+			}
+			Move testCpy = new Move(testField.get(field.indexOf(this)), test.getFrom(), test.getTo(), newKill);
+			testCpy.move();//testing move
 			if(canEnemyHitKing(testField)) {
+				System.out.println("King could be hit");
 				removals.add(test);
 			}
 		}
-		for (Point removal : removals) {
+		for (Move removal : removals) {
 			tests.remove(removal);
 		}
 	}
 	
+	protected Figure getKingFrom(boolean white, List<Figure> field) {
+		Figure[] arrayyField = new Figure[field.size()];
+		int counter = 0;
+		for (Figure figure : field) {
+			arrayyField[counter] = figure;
+			counter++;
+		}
+		return getKingFrom(white, arrayyField);
+	}
+	
 	protected Figure getKingFrom(boolean white, Figure[] field) {
 		for (Figure figure : field) {
-			if(figure.isKing && figure.isWhite() == white) {
+			if(figure.type == TYPE_KING && figure.isWhite() == white) {
 				return figure;
 			}
 		}
@@ -211,16 +265,111 @@ public abstract class Figure {
 	}
 	
 	protected boolean canEnemyHitKing(List<Figure> field) {
-		int ires = 3  + 5 / 6;
-		List<Point> hitFields = new ArrayList<>();
+		return canFieldBeHit(field, getKingFrom(isWhite(), field).getLocalPos());
+	}
+	
+	/**
+	 * 
+	 * @param field
+	 * @param local pos
+	 * @param type
+	 * @param white
+	 * @return is at point
+	 */
+	protected boolean isFigureAtPoint(List<Figure> field, Point local, int type, boolean white) {
 		for (Figure figure : field) {
-			if(figure.isWhite() != isWhite()) {// only enemies
-				hitFields.addAll(figure.getPossibleMoves(field));
+			if(figure.getType() == type && figure.isWhite() == white && figure.isAlive && figure.isAtGlobalPoint(convert(local))) {
+				return true;
 			}
 		}
-		Point kingPos = getOwnKingPos(field);
-		for (Point hit : hitFields) {
-			if(hit.x == kingPos.x && hit.y == kingPos.y) {
+		return false;
+	}
+	
+	protected Figure getFigureAtPos(List<Figure> field, Point global, boolean white) {
+		for (Figure figure : field) {
+			if(figure.isWhite() == white && figure.isAlive && figure.isAtGlobalPoint(global)) {
+				return figure;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * own figure
+	 * @param type
+	 * @return
+	 */
+	protected Figure getFigure(List<Figure> field, int type) {
+		return getFigure(field, isWhite(), type);
+	}
+	
+	protected Figure getFigure(List<Figure> field, boolean white, int type) {
+		return getFigure(field, white, type, 0);
+	}
+	
+	/**
+	 * Get figure from field by parameters
+	 * @param field
+	 * @param white
+	 * @param type
+	 * @param index
+	 * @return
+	 */
+	protected Figure getFigure(List<Figure> field, boolean white, int type, int index) {
+		int match = 0;
+		for (Figure figure : field) {
+			if(figure.isWhite() == isWhite() && figure.getType() == type) {
+				if(match == index && figure.isAlive) {
+					return figure;
+				}
+				match++;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @param field
+	 * @param p Field to check in local
+	 * @return
+	 */
+	protected boolean canFieldBeHit(List<Figure> field, Point local) {
+		Figure[] defaultFigures = getDefaultFiguresAtPoint(local, isWhite());
+		System.out.println(Arrays.toString(defaultFigures));
+		for (Figure figure : defaultFigures) {
+			for (Move possibleMove : figure.getPossibleMoves(field)) {
+				if(isFigureAtPoint(field, convert(possibleMove.getTo()), possibleMove.getFigure().getType(), !isWhite())){
+					System.out.println(figure);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 
+	 * @param local
+	 * @return
+	 */
+	protected Figure[] getDefaultFiguresAtPoint(Point local, boolean white){
+		for (Figure figure : defaultFigures[white ? 0 : 1]) {
+			figure.setGlobalPos(convert(local));
+		}
+		return defaultFigures[isWhite() ? 0 : 1];
+	}
+	
+	/**
+	 * Todo faster method maby inside player?
+	 * @param field
+	 * @param type
+	 * @param white
+	 * @return
+	 */
+	protected boolean doesPlayerHasAliveFigure(List<Figure> field, int type, boolean white) {
+		for (Figure figure : field) {
+			if(figure.isAlive && figure.isWhite() == white && figure.getType() == type) {
 				return true;
 			}
 		}
@@ -228,14 +377,7 @@ public abstract class Figure {
 	}
 	
 	protected Point getOwnKingPos(List<Figure> field) {
-		for (Figure figure : field) {
-			if(figure.isWhite() == isWhite()) {
-				if(figure.name.contentEquals("King")) {
-					return figure.getLocalPos();
-				}
-			}
-		}
-		return null;
+		return getFigure(field, TYPE_KING).getLocalPos();
 	}
 	
 	protected boolean canKillKingAfterMove(List<Figure> field, Move move) {
@@ -247,9 +389,9 @@ public abstract class Figure {
 		return p.x >= 0 && p.x < 8 && p.y >= 0 && p.y < 8;
 	}
 	
-	protected Point convert(Point global) {
+	protected final Point convert(Point global) {
 		if(white) {
-			return global;
+			return new Point(global.x, global.y);
 		} else {
 			return new Point(7 - global.x, 7 - global.y);
 		}
@@ -259,8 +401,8 @@ public abstract class Figure {
 	 * Getters Setters
 	 * @return
 	 */
-	public String getName() {
-		return name;
+	public int getType() {
+		return type;
 	}
 
 	public Point getLocalPos() {
@@ -269,8 +411,9 @@ public abstract class Figure {
 
 	public void setLocalPos(Point local) {
 		if(local.x != pos.x || local.y != pos.y) {
-			hasMoved = true;
-			this.pos = local;
+			Point newLocalPos = new Point(local.x, local.y);
+			lastPos = newLocalPos;
+			this.pos = newLocalPos;
 		}
 	}
 	
@@ -281,16 +424,98 @@ public abstract class Figure {
 	public void setGlobalPos(Point global) {
 		Point local = convert(global);
 		if(local.x != pos.x || local.y != pos.y) {
-			hasMoved = true;
-			this.pos = local;
+			Point newLocalPos = new Point(local.x, local.y);
+			lastPos = newLocalPos;
+			this.pos = newLocalPos;
 		}
 	}
 	
+	public boolean isAtGlobalPoint(Point p) {
+		Point global = getGlobalPos();
+		return p.x == global.x && p.y == global.y;
+	}
+	
+	public Point getLastPos() {
+		return new Point(lastPos.x, lastPos.y);
+	}
+	
 	public boolean hasMoved() {
-		return hasMoved;
+		return lastPos != null;
 	}
 
 	protected boolean isWhite() {
 		return white;
+	}
+	
+	public static String typeToString(int type) {
+		switch (type) {
+		case TYPE_KING: return "King";
+		case TYPE_PAWN: return "Pawn";
+		case TYPE_BISHOP: return "Bishop";
+		case TYPE_KNIGHT: return "Knight";
+		case TYPE_ROOK: return "Rook";
+		case TYPE_QUEEN: return "Queen";
+		default: return null;
+		}
+	}
+	
+	public final String getName() {
+		return typeToString(getType());
+	}
+	
+	public boolean isAlive() {
+		return isAlive;
+	}
+
+	public void setAlive(boolean isAlive) {
+		this.isAlive = isAlive;
+	}
+
+	@Override
+	public String toString() {
+		return (white ? "white " : "black ") + getName();
+	}
+
+	public void kill() {
+		isAlive = false;
+	}
+	
+	public int getIndex() {
+		return index;
+	}
+
+	@Override
+	public boolean equals(Object in) {
+		if(in instanceof Figure) {
+			Figure test = (Figure) in;
+			return test.isAlive == isAlive
+					&& test.getType() == getType()
+					&& test.isWhite() == isWhite()
+					&& test.getIndex() == getIndex();
+		} else {
+			return false;
+		}
+	}
+	
+	public void setIndex(int index) {
+		this.index = index;
+	}
+
+	@Override
+	protected Figure clone() {
+		Figure f;
+		switch (getType()) {
+		case TYPE_BISHOP: f = new Bishop(index, white); break;
+		case TYPE_PAWN: f = new Pawn(index, white); break;
+		case TYPE_KING: f = new King(white); break;
+		case TYPE_QUEEN: f = new Queen(white); break;
+		case TYPE_ROOK: f = new Rook(index, white); break;
+		case TYPE_KNIGHT: f = new Knight(index, white); break;
+		default: return null;
+		}
+		f.setIndex(index);
+		f.setLocalPos(pos);
+		f.setAlive(isAlive);
+		return f;
 	}
 }

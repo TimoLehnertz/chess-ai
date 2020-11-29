@@ -14,7 +14,7 @@ public class Human extends Player{
 	/**
 	 * local
 	 */
-	private List<Point> selection = new ArrayList<>();
+	private List<Move> possibleMoves = new ArrayList<>();
 	
 	Figure[] enemy;
 	
@@ -29,9 +29,9 @@ public class Human extends Player{
 	/**
 	 * Global
 	 */
-	private Figure getFigureOnField(Point pos) {
+	private Figure getFigureOnField(Point gloabl) {
 		for (Figure figure : figures) {
-			if(figure.getGlobalPos().x == pos.x && figure.getGlobalPos().y == pos.y) {
+			if(figure.getGlobalPos().x == gloabl.x && figure.getGlobalPos().y == gloabl.y && figure.isAlive()) {
 				return figure;
 			}
 		}
@@ -53,13 +53,18 @@ public class Human extends Player{
 
 	@Override
 	public void yourTurn(Figure[] enemy, MakeMove callback) {
-		System.out.println(white ? "white" : "black");
+		log("Its my turn");
 		myTurn = true;
 		this.enemy = enemy;
 		this.callback = callback;
 	}
 	
+	private void log(Object msg) {
+		System.out.println("[" + (white ? "white" : "black") + "] " + msg);
+	}
+	
 	private void makeMove(Move move) {
+		log("making move: " + move);
 		if(myTurn) {
 			myTurn = false;
 			callback.move(move);
@@ -80,21 +85,24 @@ public class Human extends Player{
 	}
 
 	@Override
-	public void globalFieldClicked(Point global) {
-		if(selection != null && active != null) {
-			for (Point p : selection) {
-				p = convert(p);
-				if(p.x == global.x && p.y == global.y) {
-					Move move = new Move(active, active.getGlobalPos(), p);
-					makeMove(move);
-					selection = null;
-					return;
+	public void globalFieldClicked(Point globalField) {
+		if(myTurn) {
+			if(possibleMoves != null && active != null) {
+				for (Move move : possibleMoves) {
+					Point gloabl = move.getTo();
+					if(gloabl.x == globalField.x && gloabl.y == globalField.y) {
+						makeMove(move);
+						possibleMoves = null;
+						active = null;
+						return;
+					}
 				}
 			}
-		}
-		active = getFigureOnField(global);
-		if(active != null) {
-			selection = active.getPossibleMovesChecked(getField());
+			active = getFigureOnField(globalField);
+			if(active != null) {
+				log(active + " selected");
+				possibleMoves = active.getPossibleMovesChecked(getField());
+			}
 		}
 	}
 	
@@ -102,10 +110,10 @@ public class Human extends Player{
 	public void paint(Graphics2D g, int width) {
 		if(myTurn) {
 			if(active != null) {
-				for (Point p : selection) {
-					p = localToGlobal(p);
+				for (Move move : possibleMoves) {
+					Point global = move.getTo();
 					g.setColor(new Color(100,200,100));
-					g.fillOval((int) ((double)p.x / 8 * width) + width / 8 / 4, (int) ((double) p.y / 8 * width) + width / 8 / 4, width / 8 / 2, width / 8 / 2);
+					g.fillOval((int) ((double)global.x / 8 * width) + width / 8 / 4, (int) ((double) global.y / 8 * width) + width / 8 / 4, width / 8 / 2, width / 8 / 2);
 				}
 			}
 		}

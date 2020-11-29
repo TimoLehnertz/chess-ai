@@ -5,27 +5,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import game.Move;
+
 public class Knight extends Figure {
 	
 	List<Point> directions = Arrays.asList(new Point(1,2),new Point(2,1),new Point(2,-1),new Point(2,-1),new Point(1,-2),new Point(-1,-2),new Point(-2,-1),new Point(-2,1));
 	
 	protected Knight(int i, boolean white) {
-		super(i == 0 ? 1 : 6, 7, "Knight", white);
+		super(i == 0 ? 1 : 6, 7, TYPE_KNIGHT, white, i);
 	}
 
 	@Override
-	public List<Point> getPossibleMoves(List<Figure> field) {
-		List<Point> out = new ArrayList<>();
+	public List<Move> getPossibleMoves(List<Figure> field) {
+		List<Move> out = new ArrayList<>();
 		for (Point direction : directions) {
-			out.addAll(getFreePointsInDirection(field, direction, 1));
+			out.addAll(getFreeMovesInDirection(field, direction, 1, true));
 		}
 		return out;
-	}
-	
-	@Override
-	protected Knight clone(){
-		Knight f = new Knight(0, isWhite());
-		f.setLocalPos(getLocalPos());
-		return f;
 	}
 }

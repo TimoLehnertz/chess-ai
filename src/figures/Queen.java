@@ -5,27 +5,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import game.Move;
+
 public class Queen extends Figure {
 
 	private List<Point> driections = Arrays.asList(TOP_LEFT, TOP_RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT, TOP, RIGHT, DOWN);
 	
 	protected Queen(boolean white) {
-		super(white ? 3 : 4, 7, "Queen", white);
+		super(white ? 3 : 4, 7, TYPE_QUEEN, white, 0);
 	}
 
 	@Override
-	public List<Point> getPossibleMoves(List<Figure> field) {
-		List<Point> out = new ArrayList<>();
+	public List<Move> getPossibleMoves(List<Figure> field) {
+		List<Move> out = new ArrayList<>();
 		for (Point direction : driections) {
-			out.addAll(getFreePointsInDirection(field, direction));
+			out.addAll(getFreeMovesInDirection(field, direction));
 		}
 		return out;
-	}
-	
-	@Override
-	protected Queen clone(){
-		Queen f = new Queen(isWhite());
-		f.setLocalPos(getLocalPos());
-		return f;
 	}
 }

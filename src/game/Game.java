@@ -39,12 +39,16 @@ public class Game extends JPanel{
 	}
 	
 	public void nextPlayer() {
-		System.out.println("Player: " + player + " turn");
 		player = ((player + 1) % 2);
 		players[player].yourTurn(players[((player + 1) % 2)].getFigures(), (Move move) -> {makeMove(move);});
 	}
 	 
 	private void makeMove(Move move){
+		if(move.getKill() != null) {
+			if(move.getKill().getType() == Figure.TYPE_KING) {
+				System.out.println("Win");
+			}
+		}
 		move.move();
 		moves.add(move);
 		nextPlayer();
@@ -72,7 +76,9 @@ public class Game extends JPanel{
 		}
 		for (Player player : players) {
 			for (Figure figure : player.getFigures()) {
-				figure.paint(g, width);
+				if(figure.isAlive()) {
+					figure.paint(g, width);
+				}
 			}
 		}
 		for (Player player : players) {
