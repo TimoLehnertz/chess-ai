@@ -13,6 +13,10 @@ public class Move {
 	 */
 	private Point from, to;
 	private boolean done = false;
+	/**
+	 * for castling
+	 */
+	private Move secondMove;
 	
 	/**
 	 * @param figure
@@ -23,22 +27,43 @@ public class Move {
 //		this(figure, from, to, null);
 //	}
 	
+	public Move(Figure figure, Point from, Point to, Figure kill) {
+		this(figure, from, to, kill, null);
+	}
+	
 	/**
 	 * @param figure
 	 * @param from
 	 * @param to
 	 * @param kill figure wich gets killed 
 	 */
-	public Move(Figure figure, Point from, Point to, Figure kill) {
+	public Move(Figure figure, Point from, Point to, Figure kill, Move secondMove) {
 		super();
 		this.figure = figure;
 		this.from = from;
 		this.to = to;
 		this.kill = kill;
+		this.secondMove = secondMove;
 	}
 	
 	public void move() {
 		if(!done) {
+			if(secondMove != null) {
+				secondMove.move();
+			}
+			figure.setGlobalPos(to);
+			if(kill != null) {
+				kill.kill();
+			}
+			done = true;
+		}
+	}
+	
+	public void undo() {
+		if(done) {
+			if(secondMove != null) {
+				secondMove.move();
+			}
 			figure.setGlobalPos(to);
 			if(kill != null) {
 				kill.kill();

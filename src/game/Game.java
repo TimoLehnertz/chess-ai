@@ -42,8 +42,17 @@ public class Game extends JPanel{
 		player = ((player + 1) % 2);
 		players[player].yourTurn(players[((player + 1) % 2)].getFigures(), (Move move) -> {makeMove(move);});
 	}
-	 
+	
+	private void resetMovedLastMove() {
+		for (Player player : players) {
+			for (Figure figure : player.getFigures()) {
+				figure.setMovedLastMove(false);
+			}
+		}
+	}
+	
 	private void makeMove(Move move){
+		resetMovedLastMove();
 		if(move.getKill() != null) {
 			if(move.getKill().getType() == Figure.TYPE_KING) {
 				System.out.println("Win");
@@ -87,7 +96,7 @@ public class Game extends JPanel{
 	}
 	
 	private Point getFieldOfPoint(Point p) {
-		return new Point((int) ((double)p.getX() / getWidth() * 8), (int) ((double)p.getY() / getWidth() * 8));
+		return new Point((int) ((double)p.getX() / getMinWidth() * 8), (int) ((double)p.getY() / getMinWidth() * 8));
 	}
 	
 	private void fieldClicked(Point field) {
@@ -106,26 +115,18 @@ public class Game extends JPanel{
 		
 		@Override
 		public void mousePressed(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 		
 		@Override
 		public void mouseExited(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 		
 		@Override
 		public void mouseEntered(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 		
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 	};
 }

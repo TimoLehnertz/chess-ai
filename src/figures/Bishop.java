@@ -19,7 +19,7 @@ public class Bishop extends Figure {
 	 * In local
 	 */
 	@Override
-	public List<Move> getPossibleMoves(List<Figure> field) {
+	public List<Move> getPossibleMoves(List<Figure> field, boolean all) {
 		List<Move> out = new ArrayList<>();
 		for (Point direction : driections) {
 			out.addAll(getFreeMovesInDirection(field, direction));

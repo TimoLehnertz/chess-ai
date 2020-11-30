@@ -16,7 +16,7 @@ public class Knight extends Figure {
 	}
 
 	@Override
-	public List<Move> getPossibleMoves(List<Figure> field) {
+	public List<Move> getPossibleMoves(List<Figure> field, boolean all) {
 		List<Move> out = new ArrayList<>();
 		for (Point direction : directions) {
 			out.addAll(getFreeMovesInDirection(field, direction, 1, true));

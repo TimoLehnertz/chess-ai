@@ -5,7 +5,6 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -20,11 +19,11 @@ public abstract class Figure {
 	protected static final Point TOP_LEFT = new Point(-1, -1);
 	protected static final Point TOP_RIGHT = new Point(1, -1);
 	protected static final Point DOWN_LEFT = new Point(-1, 1);
-	protected static final Point DOWN_RIGHT = new Point(1, -1);
+	protected static final Point DOWN_RIGHT = new Point(1, 1);
 	protected static final Point TOP = new Point(0, -1);
 	protected static final Point LEFT = new Point(-1, 0);
 	protected static final Point RIGHT = new Point(1, 0);
-	protected static final Point DOWN = new Point(0, -1);
+	protected static final Point DOWN = new Point(0, 1);
 	
 	public static final int TYPE_PAWN = 0;
 	public static final int TYPE_ROOK = 1;
@@ -45,6 +44,7 @@ public abstract class Figure {
 	 * Last Position or null if not moved yet
 	 */
 	private Point lastPos;
+	private boolean movedLastMove = false;
 	private int type;
 	private boolean isAlive = true;
 	private boolean white;
@@ -123,12 +123,11 @@ public abstract class Figure {
 		return out;
 	}
 	
-	public abstract List<Move> getPossibleMoves(List<Figure> field);
+	public abstract List<Move> getPossibleMoves(List<Figure> field, boolean all);
 	
 	
 	public List<Move> getPossibleMovesChecked(List<Figure> field){
-		List<Move> tests = getPossibleMoves(field);
-		System.out.println("unchecked: " + tests);
+		List<Move> tests = getPossibleMoves(field, true);
 		deleteInvalidMoves(field, tests);
 		return tests;
 	}
@@ -285,9 +284,27 @@ public abstract class Figure {
 		return false;
 	}
 	
+	protected boolean isFigureAtPoint(List<Figure> field, Point local) {
+		for (Figure figure : field) {
+			if(figure.isAlive && figure.isAtGlobalPoint(convert(local))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	protected Figure getFigureAtPos(List<Figure> field, Point global, boolean white) {
 		for (Figure figure : field) {
 			if(figure.isWhite() == white && figure.isAlive && figure.isAtGlobalPoint(global)) {
+				return figure;
+			}
+		}
+		return null;
+	}
+	
+	protected Figure getFigureTypeAtPos(List<Figure> field, Point global, boolean white, int type) {
+		for (Figure figure : field) {
+			if(figure.isWhite() == white && figure.isAlive && figure.isAtGlobalPoint(global) && figure.getType() == type) {
 				return figure;
 			}
 		}
@@ -336,11 +353,9 @@ public abstract class Figure {
 	 */
 	protected boolean canFieldBeHit(List<Figure> field, Point local) {
 		Figure[] defaultFigures = getDefaultFiguresAtPoint(local, isWhite());
-		System.out.println(Arrays.toString(defaultFigures));
 		for (Figure figure : defaultFigures) {
-			for (Move possibleMove : figure.getPossibleMoves(field)) {
+			for (Move possibleMove : figure.getPossibleMoves(field, false)) {
 				if(isFigureAtPoint(field, convert(possibleMove.getTo()), possibleMove.getFigure().getType(), !isWhite())){
-					System.out.println(figure);
 					return true;
 				}
 			}
@@ -412,7 +427,8 @@ public abstract class Figure {
 	public void setLocalPos(Point local) {
 		if(local.x != pos.x || local.y != pos.y) {
 			Point newLocalPos = new Point(local.x, local.y);
-			lastPos = newLocalPos;
+			setMovedLastMove(true);
+			lastPos = getLocalPos();
 			this.pos = newLocalPos;
 		}
 	}
@@ -423,11 +439,7 @@ public abstract class Figure {
 	
 	public void setGlobalPos(Point global) {
 		Point local = convert(global);
-		if(local.x != pos.x || local.y != pos.y) {
-			Point newLocalPos = new Point(local.x, local.y);
-			lastPos = newLocalPos;
-			this.pos = newLocalPos;
-		}
+		setLocalPos(local);
 	}
 	
 	public boolean isAtGlobalPoint(Point p) {
@@ -435,8 +447,12 @@ public abstract class Figure {
 		return p.x == global.x && p.y == global.y;
 	}
 	
-	public Point getLastPos() {
+	public Point getLastLocalPos() {
 		return new Point(lastPos.x, lastPos.y);
+	}
+	
+	public Point getLastGlobalPos() {
+		return convert(lastPos);
 	}
 	
 	public boolean hasMoved() {
@@ -484,6 +500,14 @@ public abstract class Figure {
 		return index;
 	}
 
+	public boolean isMovedLastMove() {
+		return movedLastMove;
+	}
+
+	public void setMovedLastMove(boolean movedLastMove) {
+		this.movedLastMove = movedLastMove;
+	}
+
 	@Override
 	public boolean equals(Object in) {
 		if(in instanceof Figure) {
@@ -491,7 +515,8 @@ public abstract class Figure {
 			return test.isAlive == isAlive
 					&& test.getType() == getType()
 					&& test.isWhite() == isWhite()
-					&& test.getIndex() == getIndex();
+					&& test.getIndex() == getIndex()
+					&& test.isMovedLastMove() == isMovedLastMove();
 		} else {
 			return false;
 		}
@@ -516,6 +541,7 @@ public abstract class Figure {
 		f.setIndex(index);
 		f.setLocalPos(pos);
 		f.setAlive(isAlive);
+		f.setMovedLastMove(isMovedLastMove());
 		return f;
 	}
 }
