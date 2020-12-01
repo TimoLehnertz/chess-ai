@@ -247,17 +247,7 @@ public abstract class Figure {
 		}
 	}
 	
-	protected Figure getKingFrom(boolean white, List<Figure> field) {
-		Figure[] arrayyField = new Figure[field.size()];
-		int counter = 0;
-		for (Figure figure : field) {
-			arrayyField[counter] = figure;
-			counter++;
-		}
-		return getKingFrom(white, arrayyField);
-	}
-	
-	protected Figure getKingFrom(boolean white, Figure[] field) {
+	public static Figure getKingFrom(boolean white, List<Figure> field) {
 		for (Figure figure : field) {
 			if(figure.type == TYPE_KING && figure.isWhite() == white) {
 				return figure;
@@ -271,8 +261,8 @@ public abstract class Figure {
 		return false;
 	}
 	
-	protected boolean canEnemyHitKing(List<Figure> field) {
-		return canFieldBeHit(field, getKingFrom(isWhite(), field).getLocalPos());
+	public boolean canEnemyHitKing(List<Figure> field) {
+		return canBeHitBy(field, getKingFrom(isWhite(), field).getLocalPos()) > 0;
 	}
 	
 	/**
@@ -353,22 +343,38 @@ public abstract class Figure {
 		return null;
 	}
 	
-	/**
-	 * 
-	 * @param field
-	 * @param p Field to check in local
-	 * @return
-	 */
-	protected boolean canFieldBeHit(List<Figure> field, Point local) {
+	public int canBeHitBy(List<Figure> field) {
+		return canBeHitBy(field, getLocalPos());
+	}
+	
+	protected int canBeHitBy(List<Figure> field, Point local) {
+		int counter = 0;
 		Figure[] defaultFigures = getDefaultFiguresAtPoint(local, isWhite());
 		for (Figure figure : defaultFigures) {
 			for (Move possibleMove : figure.getPossibleMoves(field, false)) {
 				if(isFigureAtPoint(field, convert(possibleMove.getTo()), possibleMove.getFigure().getType(), !isWhite())){
-					return true;
+					counter++;
 				}
 			}
 		}
-		return false;
+		return counter;
+	}
+	
+	public int isCoveredBy(List<Figure> field) {
+		return isCoveredBy(field, getLocalPos());
+	}
+	
+	protected int isCoveredBy(List<Figure> field, Point local) {
+		int counter = 0;
+		Figure[] defaultFigures = getDefaultFiguresAtPoint(local, !isWhite());
+		for (Figure figure : defaultFigures) {
+			for (Move possibleMove : figure.getPossibleMoves(field, false)) {
+				if(isFigureAtPoint(field, convert(possibleMove.getTo()), possibleMove.getFigure().getType(), isWhite())){
+					counter++;
+				}
+			}
+		}
+		return counter;
 	}
 	
 	/**
@@ -380,7 +386,7 @@ public abstract class Figure {
 		for (Figure figure : defaultFigures[white ? 0 : 1]) {
 			figure.setGlobalPos(convert(local));
 		}
-		return defaultFigures[isWhite() ? 0 : 1];
+		return defaultFigures[white ? 0 : 1];
 	}
 	
 	/**
@@ -401,11 +407,6 @@ public abstract class Figure {
 	
 	protected Point getOwnKingPos(List<Figure> field) {
 		return getFigure(field, TYPE_KING).getLocalPos();
-	}
-	
-	protected boolean canKillKingAfterMove(List<Figure> field, Move move) {
-		
-		return false;
 	}
 	
 	protected boolean pointInField(Point p) {

@@ -83,7 +83,7 @@ public class Human extends Player{
 			}
 			active = getFigureOnField(globalField);
 			if(active != null) {
-				log(active + " selected");
+				log(active + " selected. covered by: " + active.isCoveredBy(field) + ", canBeHitBy: " + active.canBeHitBy(field));
 				possibleMoves = active.getPossibleMovesChecked(field);
 			}
 		}

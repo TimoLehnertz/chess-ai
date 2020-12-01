@@ -15,6 +15,7 @@ import java.util.List;
 import javax.swing.JPanel;
 
 import figures.Figure;
+import figures.King;
 
 public class Game extends JPanel{
 
@@ -29,6 +30,8 @@ public class Game extends JPanel{
 	 */
 	Player[] players = new Player[2];
 	List<Figure> field = new ArrayList<>();
+	
+	List<King> testKings = Arrays.asList(new King(true), new King(false));
 	
 	private int player = 1;
 	private List<Move> moves = new ArrayList<>();
@@ -58,17 +61,31 @@ public class Game extends JPanel{
 		}
 	}
 	
+	public static boolean canPlayerMove(List<Figure> field, boolean white) {
+		for (Figure figure : field) {
+			if(figure.isWhite() == white && figure.isAlive()) {
+				if(figure.getPossibleMovesChecked(field).size() > 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	private void makeMove(Move move){
 		if(move != null) {
 			lastMove = move.getTo();
 			resetMovedLastMove();
-			if(move.getKill() != null) {
-				if(move.getKill().getType() == Figure.TYPE_KING) {
-					System.out.println("Win");
-				}
-			}
 			move.move();
 			repaint();
+			if(!canPlayerMove(field, player % 2 == 0 ? false : true)) {//reversed for opponent
+				if(testKings.get((player + 1) % 2).canEnemyHitKing(field)) {
+					System.out.println("--------------------------------- checkmate ---------------------------------------");
+					System.out.println((player % 2 == 0 ? "White" : "Black") + " wins!");
+				} else {
+					System.out.println("--------------------------------- Remie ---------------------------------------");
+				}
+			}
 			cleanMovesFrom(currentMove + 1);
 			moves.add(move);
 			currentMove = moves.size() - 1;

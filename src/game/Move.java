@@ -94,9 +94,13 @@ public class Move {
 	public static String pointToString(Point p) {
 		return "(" + p.x + ", " + p.y + ")";
 	}
-	
+
 	public Figure getKill() {
 		return kill;
+	}
+	
+	public boolean isCastle() {
+		return secondMove != null;
 	}
 	
 	@Override
