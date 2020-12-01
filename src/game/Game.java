@@ -4,9 +4,12 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -25,33 +28,38 @@ public class Game extends JPanel{
 	 * and their figures
 	 */
 	Player[] players = new Player[2];
+	List<Figure> field = new ArrayList<>();
 	
-	int player = 1;
-	List<Move> moves = new ArrayList<>();
-	
+	private int player = 1;
+	private List<Move> moves = new ArrayList<>();
+	private int currentMove = 0;
+	private Point lastMove;
 	
 	public Game(Player p1, Player p2) {
 		super();
+		field.addAll(Arrays.asList(Figure.getAllDefault(true)));
+		field.addAll(Arrays.asList(Figure.getAllDefault(false)));
 		this.players[0] = p1;
 		this.players[1] = p2;
 		nextPlayer();
 		this.addMouseListener(mouse);
+		this.addKeyListener(keyListener);
 	}
 	
 	public void nextPlayer() {
 		player = ((player + 1) % 2);
-		players[player].yourTurn(players[((player + 1) % 2)].getFigures(), (Move move) -> {makeMove(move);});
+		players[player].yourTurn(field, (Move move) -> {makeMove(move);});
+		repaint();
 	}
 	
 	private void resetMovedLastMove() {
-		for (Player player : players) {
-			for (Figure figure : player.getFigures()) {
-				figure.setMovedLastMove(false);
-			}
+		for (Figure figure : field) {
+			figure.setMovedLastMove(false);
 		}
 	}
 	
 	private void makeMove(Move move){
+		lastMove = move.getTo();
 		resetMovedLastMove();
 		if(move.getKill() != null) {
 			if(move.getKill().getType() == Figure.TYPE_KING) {
@@ -59,9 +67,11 @@ public class Game extends JPanel{
 			}
 		}
 		move.move();
+		
+		cleanMovesFrom(currentMove + 1);
 		moves.add(move);
+		currentMove = moves.size() - 1;
 		nextPlayer();
-		repaint();
 	}
 	
 	private int getMinWidth() {
@@ -83,11 +93,13 @@ public class Game extends JPanel{
 			}
 			white = !white;
 		}
-		for (Player player : players) {
-			for (Figure figure : player.getFigures()) {
-				if(figure.isAlive()) {
-					figure.paint(g, width);
-				}
+		if(lastMove != null) {
+			g.setColor(new Color(10,40,80, 150));
+			g.fillRect((int) ((double)lastMove.x / size * width), (int) ((double)lastMove.y / size * width), width / size, width / size);
+		}
+		for (Figure figure : field) {
+			if(figure.isAlive()) {
+				figure.paint(g, width);
 			}
 		}
 		for (Player player : players) {
@@ -104,6 +116,47 @@ public class Game extends JPanel{
 			player.globalFieldClicked(field);
 		}
 	}
+	
+	private void undo() {
+		if(currentMove >= 0) {
+			moves.get(currentMove).undo();
+			currentMove--;
+			nextPlayer();
+		}
+	}
+	
+	private void redo() {
+		if(currentMove < moves.size() - 1) {
+			moves.get(currentMove + 1).move();
+			currentMove++;
+			nextPlayer();
+		}
+	}
+	
+	private void cleanMovesFrom(int from) {
+		for (int i = from; i < moves.size(); i++) {
+			moves.remove(from);
+		}
+	}
+	
+	KeyListener keyListener = new KeyListener() {
+		@Override
+		public void keyTyped(KeyEvent e) {
+		}
+		
+		@Override
+		public void keyReleased(KeyEvent e) {
+			if(e.getKeyCode() == 37) {
+				undo();
+			} else if(e.getKeyCode() == 39) {
+				redo();
+			}
+		}
+		
+		@Override
+		public void keyPressed(KeyEvent e) {
+		}
+	};
 	
 	MouseListener mouse = new MouseListener() {
 		@Override

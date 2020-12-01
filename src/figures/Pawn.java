@@ -9,7 +9,7 @@ import game.Move;
 public class Pawn extends Figure {
 
 	protected Pawn(int i, boolean white) {
-		super(i, 6, TYPE_PAWN, white, i);
+		super(i, 6, TYPE_PAWN, white, i, 1);
 	}
 
 	@Override
@@ -42,7 +42,6 @@ public class Pawn extends Figure {
 			Figure hit1 = getFigureTypeAtPos(field, convert(test1), !isWhite(), TYPE_PAWN);
 			Figure hit2 = getFigureTypeAtPos(field, convert(test2), !isWhite(), TYPE_PAWN);
 			if(hit1 != null) {
-				System.out.println("hit 1: " + hit1.isMovedLastMove());
 				if(hit1.isMovedLastMove()) {
 					if(hit1.getLastLocalPos().y == 6) {
 						out.add(new Move(this, getGlobalPos(), convert(add(test1, new Point(0, -1))), hit1));
@@ -50,7 +49,6 @@ public class Pawn extends Figure {
 				}
 			}
 			if(hit2 != null) {
-				System.out.println("hit 2: " + hit2.isMovedLastMove());
 				if(hit2.isMovedLastMove()) {
 					if(hit2.getLastLocalPos().y == 6) {
 						out.add(new Move(this, getGlobalPos(), convert(add(test2, new Point(0, -1))), hit2));

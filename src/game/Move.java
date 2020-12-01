@@ -62,13 +62,13 @@ public class Move {
 	public void undo() {
 		if(done) {
 			if(secondMove != null) {
-				secondMove.move();
+				secondMove.undo();
 			}
-			figure.setGlobalPos(to);
+			figure.setGlobalPos(from);
 			if(kill != null) {
-				kill.kill();
+				kill.revive();
 			}
-			done = true;
+			done = false;
 		}
 	}
 	
@@ -98,7 +98,7 @@ public class Move {
 	public Figure getKill() {
 		return kill;
 	}
-
+	
 	@Override
 	public String toString() {
 		return "Move " + figure + " from: " + pointToString(from) + ", to: " + pointToString(to) + (kill != null ? " killing: " + kill : "");

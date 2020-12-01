@@ -16,7 +16,7 @@ public class Human extends Player{
 	 */
 	private List<Move> possibleMoves = new ArrayList<>();
 	
-	Figure[] enemy;
+	List<Figure> field;
 	
 	private boolean myTurn = false;
 	
@@ -30,8 +30,8 @@ public class Human extends Player{
 	 * Global
 	 */
 	private Figure getFigureOnField(Point gloabl) {
-		for (Figure figure : figures) {
-			if(figure.getGlobalPos().x == gloabl.x && figure.getGlobalPos().y == gloabl.y && figure.isAlive()) {
+		for (Figure figure : field) {
+			if(figure.getGlobalPos().x == gloabl.x && figure.getGlobalPos().y == gloabl.y && figure.isAlive() && figure.isWhite() == isWhite()) {
 				return figure;
 			}
 		}
@@ -44,7 +44,7 @@ public class Human extends Player{
 	 * @return
 	 */
 	protected Point convert(Point global) {
-		if(white) {
+		if(isWhite()) {
 			return global;
 		} else {
 			return new Point(7 - global.x, 7 - global.y);
@@ -52,15 +52,11 @@ public class Human extends Player{
 	}
 
 	@Override
-	public void yourTurn(Figure[] enemy, MakeMove callback) {
+	public void yourTurn(List<Figure> field, MakeMove callback) {
 		log("Its my turn");
 		myTurn = true;
-		this.enemy = enemy;
+		this.field = field;
 		this.callback = callback;
-	}
-	
-	private void log(Object msg) {
-		System.out.println("[" + (white ? "white" : "black") + "] " + msg);
 	}
 	
 	private void makeMove(Move move) {
@@ -69,19 +65,6 @@ public class Human extends Player{
 			myTurn = false;
 			callback.move(move);
 		}
-	}
-	
-	private List<Figure> getField(){
-		List<Figure> out = new ArrayList<>();
-		if(enemy != null) {
-			for (Figure figure : enemy) {
-				out.add(figure);
-			}
-		}
-		for (Figure figure : figures) {
-			out.add(figure);
-		}
-		return out;
 	}
 
 	@Override
@@ -101,7 +84,7 @@ public class Human extends Player{
 			active = getFigureOnField(globalField);
 			if(active != null) {
 				log(active + " selected");
-				possibleMoves = active.getPossibleMovesChecked(getField());
+				possibleMoves = active.getPossibleMovesChecked(field);
 			}
 		}
 	}

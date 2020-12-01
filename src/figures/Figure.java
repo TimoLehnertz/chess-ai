@@ -39,6 +39,7 @@ public abstract class Figure {
 	public static final BufferedImage[] IMG_ROOK = {loadImage("/rook_w.png"),loadImage("/rook_b.png")};
 	public static final BufferedImage[] IMG_KNIGHT = {loadImage("/knight_w.png"),loadImage("/knight_b.png")};
 	
+	private double score;
 	private Point pos;
 	/**
 	 * Last Position or null if not moved yet
@@ -53,12 +54,13 @@ public abstract class Figure {
 	
 	private static final Figure[][] defaultFigures = {getDistinctDefaultFigures(true), getDistinctDefaultFigures(false)};
 	
-	protected Figure(int x, int y, int type, boolean white, int index) {
+	protected Figure(int x, int y, int type, boolean white, int index, double score) {
 		super();
 		this.pos = new Point(x, y);
 		this.type = type;
 		this.white = white;
 		this.index = index;
+		this.score = score;
 	}
 	
 	 static BufferedImage loadImage(String path) {
@@ -127,6 +129,9 @@ public abstract class Figure {
 	
 	
 	public List<Move> getPossibleMovesChecked(List<Figure> field){
+		if(!isAlive()) {
+			return new ArrayList<Move>();
+		}
 		List<Move> tests = getPossibleMoves(field, true);
 		deleteInvalidMoves(field, tests);
 		return tests;
@@ -157,7 +162,11 @@ public abstract class Figure {
 				return i - 1;
 			}
 		}
-		return 0;
+		return 7;
+	}
+	
+	public static boolean pointInPoint(Point a, Point b) {
+		return a.x == b.x && a.y == b.y;
 	}
 	
 	protected List<Move> getFreeMovesInDirection(List<Figure> field, Point direction){
@@ -230,7 +239,6 @@ public abstract class Figure {
 			Move testCpy = new Move(testField.get(field.indexOf(this)), test.getFrom(), test.getTo(), newKill);
 			testCpy.move();//testing move
 			if(canEnemyHitKing(testField)) {
-				System.out.println("King could be hit");
 				removals.add(test);
 			}
 		}
@@ -459,7 +467,7 @@ public abstract class Figure {
 		return lastPos != null;
 	}
 
-	protected boolean isWhite() {
+	public boolean isWhite() {
 		return white;
 	}
 	
@@ -496,6 +504,10 @@ public abstract class Figure {
 		isAlive = false;
 	}
 	
+	public void revive() {
+		isAlive = true;
+	}
+	
 	public int getIndex() {
 		return index;
 	}
@@ -506,6 +518,10 @@ public abstract class Figure {
 
 	public void setMovedLastMove(boolean movedLastMove) {
 		this.movedLastMove = movedLastMove;
+	}
+
+	public double getScore() {
+		return score;
 	}
 
 	@Override
@@ -527,7 +543,7 @@ public abstract class Figure {
 	}
 
 	@Override
-	protected Figure clone() {
+	public Figure clone() {
 		Figure f;
 		switch (getType()) {
 		case TYPE_BISHOP: f = new Bishop(index, white); break;

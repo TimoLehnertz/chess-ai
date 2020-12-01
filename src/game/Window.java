@@ -15,5 +15,7 @@ public class Window extends JFrame {
 	
 	public void displayGame(Game game) {
 		getContentPane().add(game);
+		game.setFocusable(true);
+		game.requestFocus();
 	}
 }

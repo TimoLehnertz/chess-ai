@@ -12,7 +12,7 @@ public class Bishop extends Figure {
 	private List<Point> driections = Arrays.asList(TOP_LEFT, TOP_RIGHT, DOWN_LEFT, DOWN_RIGHT);
 	
 	protected Bishop(int index, boolean white) {
-		super(index == 0 ? 2 : 5, 7, TYPE_BISHOP, white, index);
+		super(index == 0 ? 2 : 5, 7, TYPE_BISHOP, white, index, 3);
 	}
 	
 	/**

@@ -12,7 +12,7 @@ public class Rook extends Figure {
 	private List<Point> driections = Arrays.asList(LEFT, TOP, RIGHT, DOWN);
 	
 	protected Rook(int i, boolean white) {
-		super(i == 0 ? 0 : 7, 7, TYPE_ROOK, white, i);
+		super(i == 0 ? 0 : 7, 7, TYPE_ROOK, white, i, 5);
 	}
 
 	@Override

@@ -12,7 +12,7 @@ public class Queen extends Figure {
 	private List<Point> driections = Arrays.asList(TOP_LEFT, TOP_RIGHT, DOWN_LEFT, DOWN_RIGHT, LEFT, TOP, RIGHT, DOWN);
 	
 	protected Queen(boolean white) {
-		super(white ? 3 : 4, 7, TYPE_QUEEN, white, 0);
+		super(white ? 3 : 4, 7, TYPE_QUEEN, white, 0, 9);
 	}
 
 	@Override
