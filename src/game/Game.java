@@ -59,19 +59,21 @@ public class Game extends JPanel{
 	}
 	
 	private void makeMove(Move move){
-		lastMove = move.getTo();
-		resetMovedLastMove();
-		if(move.getKill() != null) {
-			if(move.getKill().getType() == Figure.TYPE_KING) {
-				System.out.println("Win");
+		if(move != null) {
+			lastMove = move.getTo();
+			resetMovedLastMove();
+			if(move.getKill() != null) {
+				if(move.getKill().getType() == Figure.TYPE_KING) {
+					System.out.println("Win");
+				}
 			}
+			move.move();
+			repaint();
+			cleanMovesFrom(currentMove + 1);
+			moves.add(move);
+			currentMove = moves.size() - 1;
+			nextPlayer();
 		}
-		move.move();
-		
-		cleanMovesFrom(currentMove + 1);
-		moves.add(move);
-		currentMove = moves.size() - 1;
-		nextPlayer();
 	}
 	
 	private int getMinWidth() {

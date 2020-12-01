@@ -13,6 +13,7 @@ public class Branch {
 	private int recursionLevel;
 	private int maxRecursionLevel;
 	private boolean white;
+	private boolean enemyMat = false;
 	
 	/**
 	 * @param move
@@ -34,8 +35,14 @@ public class Branch {
 			for (Branch branch : subBranches) {
 				maxScore = Math.max(maxScore, branch.getScore());
 			}
+			if(enemyMat) {
+				return maxScore + 10;
+			}
 			return maxScore;
 		} else {
+			if(enemyMat) {
+				return getScoreFromField(field) + 10;
+			}
 			return getScoreFromField(field);
 		}
 	}
@@ -61,7 +68,10 @@ public class Branch {
 		this.field = fieldCpy;
 		if(recursionLevel <= maxRecursionLevel) {
 			moveCpy.move();
-			new Ki(!white, recursionLevel + 1).yourTurn(fieldCpy, (Move move)->{move.move();});
+			new Ki(!white, recursionLevel + 1).yourTurn(fieldCpy, (Move move)->{if(move != null) {move.move();} else{enemyMat = true;}});
+			if(enemyMat) {
+				return;
+			}
 			for (Figure figure : fieldCpy) {
 				if(figure.isWhite() == white) {
 					for (Move move : figure.getPossibleMovesChecked(fieldCpy)) {

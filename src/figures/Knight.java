@@ -9,7 +9,7 @@ import game.Move;
 
 public class Knight extends Figure {
 	
-	List<Point> directions = Arrays.asList(new Point(1,2),new Point(2,1),new Point(2,-1),new Point(2,-1),new Point(1,-2),new Point(-1,-2),new Point(-2,-1),new Point(-2,1));
+	List<Point> directions = Arrays.asList(new Point(1,2),new Point(2,1),new Point(2,-1),new Point(-1,2),new Point(1,-2),new Point(-1,-2),new Point(-2,-1),new Point(-2,1));
 	
 	protected Knight(int i, boolean white) {
 		super(i == 0 ? 1 : 6, 7, TYPE_KNIGHT, white, i, 3);

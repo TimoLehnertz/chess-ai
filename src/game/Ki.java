@@ -12,7 +12,7 @@ public class Ki extends Player{
 	/**
 	 * Number of recursions when calculating best move
 	 */
-	public static int MAX_RECURSION_LEVEL = 2;
+	public static int MAX_RECURSION_LEVEL = 1;
 	
 	private List<Branch> branches;
 	
@@ -31,16 +31,24 @@ public class Ki extends Player{
 	 * start calculating the best possible move
 	 */
 	private Move perform(List<Figure> field) {
+//		System.out.println("Recursion level: " + recursion);
+		int i = 0;
 		for (Figure figure : field) {
 			if(figure.isWhite() == isWhite()) {
 				for (Move move : figure.getPossibleMovesChecked(field)) {
 					Branch branch = new Branch(move, white, recursion, MAX_RECURSION_LEVEL);
 					branch.calculate(field);
 					branches.add(branch);
+					i++;
 				}
 			}
 		}
-		Branch bestBranch = null;
+//		System.out.println("calculated " + i + " moves");
+		if(branches.size() == 0) {
+			log("I Lost");
+			return null;
+		}
+		Branch bestBranch = branches.get(0);
 		double maxScore = -1000;
 		for (Branch branch : branches) {
 			if(branch.getScore() > maxScore) {
@@ -51,7 +59,6 @@ public class Ki extends Player{
 		if(bestBranch != null) {
 			return bestBranch.getMove();
 		} else {
-			System.out.println(field);
 			log("I am unnable to perform :(");
 			return null;
 		}
@@ -64,7 +71,7 @@ public class Ki extends Player{
 		if(bestMove != null) {
 			callback.move(bestMove);
 		} else {
-			log("I lost :(");
+			callback.move(null);
 		}
 	}
 
